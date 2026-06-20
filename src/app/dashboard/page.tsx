@@ -13,12 +13,10 @@ interface Profile {
   plan: string;
   onboarding_complete: boolean;
 }
-
 interface Credits {
   balance: number;
   total_used: number;
 }
-
 interface Project {
   id: string;
   title: string;
@@ -26,7 +24,6 @@ interface Project {
   status: string;
   updated_at: string;
 }
-
 interface GenerationRequest {
   id: string;
   prompt: string;
@@ -36,6 +33,7 @@ interface GenerationRequest {
 }
 
 // ── Icon helper ──
+// Only uses icon names confirmed to exist in Material Symbols Outlined
 function Icon({
   name,
   className = "",
@@ -49,9 +47,10 @@ function Icon({
 }) {
   return (
     <span
-      className={`material-symbols-outlined select-none ${className}`}
+      className={`material-symbols-outlined select-none leading-none ${className}`}
       style={{
         fontVariationSettings: filled ? "'FILL' 1" : "'FILL' 0",
+        lineHeight: 1,
         ...style,
       }}
     >
@@ -59,6 +58,16 @@ function Icon({
     </span>
   );
 }
+
+// ── Nav items — only confirmed Material Symbols names ──
+const NAV_ITEMS = [
+  { icon: "space_dashboard", label: "Dashboard",      href: "/dashboard",        active: true  },
+  { icon: "folder_open",     label: "My Projects",    href: "/projects",         active: false },
+  { icon: "lyrics",          label: "Lyric Assistant",href: "/lyric-assistant",  active: false },
+  { icon: "graphic_eq",      label: "SmartProduce",   href: "/smart-produce",    active: false },
+  { icon: "bar_chart",       label: "Music IQ",       href: "/music-iq",         active: false },
+  { icon: "calendar_month",  label: "Studio Sessions",href: "/sessions",         active: false },
+];
 
 // ── Sidebar ──
 function Sidebar({
@@ -70,27 +79,15 @@ function Sidebar({
   credits: Credits | null;
   onSignOut: () => void;
 }) {
-  const navItems = [
-    { icon: "dashboard", label: "Dashboard", href: "/dashboard", active: true },
-    { icon: "folder_music", label: "My Projects", href: "/projects" },
-    { icon: "mic_external_on", label: "Lyric Assistant", href: "/lyric-assistant" },
-    { icon: "tune", label: "SmartProduce", href: "/smart-produce" },
-    { icon: "analytics", label: "Music IQ", href: "/music-iq" },
-    { icon: "calendar_month", label: "Studio Sessions", href: "/sessions" },
-  ];
-
   return (
     <aside
-      className="hidden lg:flex flex-col w-64 min-h-screen border-r flex-shrink-0"
-      style={{
-        backgroundColor: "#0e0e0e",
-        borderColor: "rgba(73,68,85,0.2)",
-      }}
+      className="hidden lg:flex flex-col w-60 min-h-screen border-r flex-shrink-0"
+      style={{ backgroundColor: "#0e0e0e", borderColor: "rgba(73,68,85,0.25)" }}
     >
       {/* Logo */}
       <div
-        className="flex items-center h-20 px-6 border-b flex-shrink-0"
-        style={{ borderColor: "rgba(73,68,85,0.2)" }}
+        className="flex items-center h-20 px-5 border-b flex-shrink-0"
+        style={{ borderColor: "rgba(73,68,85,0.25)" }}
       >
         <Link href="/">
           <span
@@ -103,87 +100,98 @@ function Sidebar({
       </div>
 
       {/* Profile card */}
-      <div
-        className="mx-4 mt-4 p-4 rounded-xl"
-        style={{
-          background: "rgba(32,31,31,0.6)",
-          border: "1px solid rgba(124,77,255,0.2)",
-          boxShadow: "0 0 20px -8px rgba(124,77,255,0.25)",
-        }}
-      >
-        <div className="flex items-center gap-3 mb-3">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-sm"
-            style={{ backgroundColor: "#7c4dff", fontFamily: "var(--font-hanken)" }}
-          >
-            {profile?.full_name?.charAt(0)?.toUpperCase() ?? "Z"}
-          </div>
-          <div className="min-w-0">
-            <p
-              className="text-sm font-semibold text-white truncate"
-              style={{ fontFamily: "var(--font-hanken)" }}
-            >
-              {profile?.full_name ?? "Loading…"}
-            </p>
-            <p
-              className="text-xs truncate capitalize"
-              style={{ fontFamily: "var(--font-jetbrains)", color: "#cdbdff" }}
-            >
-              {profile?.role ?? "artiste"}
-            </p>
-          </div>
-        </div>
-
-        {/* Credit balance */}
+      <div className="px-4 pt-4">
         <div
-          className="flex items-center justify-between p-2 rounded-lg"
-          style={{ backgroundColor: "rgba(73,68,85,0.2)" }}
+          className="p-4 rounded-xl"
+          style={{
+            background: "rgba(32,31,31,0.7)",
+            border: "1px solid rgba(124,77,255,0.25)",
+            boxShadow: "0 0 20px -8px rgba(124,77,255,0.3)",
+          }}
         >
-          <div className="flex items-center gap-2">
-            <Icon name="toll" className="text-base" style={{ color: "#e9c400" }} filled />
-            <span
-              className="text-xs"
-              style={{ fontFamily: "var(--font-jetbrains)", color: "#cac3d8" }}
+          {/* Avatar + name row */}
+          <div className="flex items-center gap-3 mb-3">
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold"
+              style={{ backgroundColor: "#7c4dff" }}
             >
-              Credits
+              {profile?.full_name?.charAt(0)?.toUpperCase() ?? "Z"}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p
+                className="text-sm font-semibold text-white leading-tight truncate"
+                style={{ fontFamily: "var(--font-hanken)" }}
+              >
+                {profile?.full_name ?? "…"}
+              </p>
+              <p
+                className="text-xs leading-tight capitalize"
+                style={{ fontFamily: "var(--font-jetbrains)", color: "#cdbdff" }}
+              >
+                {profile?.role ?? "artiste"}
+              </p>
+            </div>
+          </div>
+
+          {/* Credits pill */}
+          <div
+            className="flex items-center justify-between px-3 py-2 rounded-lg"
+            style={{ backgroundColor: "rgba(73,68,85,0.25)" }}
+          >
+            <div className="flex items-center gap-2">
+              <Icon name="toll" className="text-base" style={{ color: "#e9c400", fontSize: "16px" }} filled />
+              <span
+                className="text-xs"
+                style={{ fontFamily: "var(--font-jetbrains)", color: "#cac3d8", fontSize: "11px" }}
+              >
+                Credits
+              </span>
+            </div>
+            <span
+              className="text-sm font-bold"
+              style={{ fontFamily: "var(--font-jetbrains)", color: "#e9c400" }}
+            >
+              {credits?.balance ?? "—"}
             </span>
           </div>
-          <span
-            className="text-sm font-bold"
-            style={{ fontFamily: "var(--font-jetbrains)", color: "#e9c400" }}
-          >
-            {credits?.balance ?? "—"}
-          </span>
         </div>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        {NAV_ITEMS.map((item) => (
           <Link key={item.label} href={item.href}>
             <div
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all cursor-pointer group"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 cursor-pointer"
               style={{
-                backgroundColor: item.active
-                  ? "rgba(124,77,255,0.15)"
-                  : "transparent",
-                border: item.active
-                  ? "1px solid rgba(124,77,255,0.3)"
-                  : "1px solid transparent",
+                backgroundColor: item.active ? "rgba(124,77,255,0.15)" : "transparent",
+                border: item.active ? "1px solid rgba(124,77,255,0.3)" : "1px solid transparent",
+              }}
+              onMouseEnter={(e) => {
+                if (!item.active)
+                  (e.currentTarget as HTMLDivElement).style.backgroundColor = "rgba(73,68,85,0.15)";
+              }}
+              onMouseLeave={(e) => {
+                if (!item.active)
+                  (e.currentTarget as HTMLDivElement).style.backgroundColor = "transparent";
               }}
             >
               <Icon
                 name={item.icon}
                 filled={item.active}
-                className="text-xl flex-shrink-0"
-                style={{ color: item.active ? "#cdbdff" : "#948ea1" }}
+                style={{
+                  color: item.active ? "#cdbdff" : "#948ea1",
+                  fontSize: "20px",
+                  width: "20px",
+                  flexShrink: 0,
+                }}
               />
               <span
-                className="text-sm"
+                className="text-sm truncate"
                 style={{
                   fontFamily: "var(--font-hanken)",
                   fontWeight: item.active ? 600 : 400,
-                  color: item.active ? "#cdbdff" : "#948ea1",
+                  color: item.active ? "#cdbdff" : "#cac3d8",
                 }}
               >
                 {item.label}
@@ -194,14 +202,13 @@ function Sidebar({
       </nav>
 
       {/* Sign out */}
-      <div className="p-4 border-t" style={{ borderColor: "rgba(73,68,85,0.2)" }}>
+      <div className="px-3 pb-4 border-t pt-3" style={{ borderColor: "rgba(73,68,85,0.2)" }}>
         <button
           onClick={onSignOut}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 text-left"
           style={{ color: "#948ea1" }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-              "rgba(73,68,85,0.2)";
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(73,68,85,0.2)";
             (e.currentTarget as HTMLButtonElement).style.color = "#e5e2e1";
           }}
           onMouseLeave={(e) => {
@@ -209,11 +216,8 @@ function Sidebar({
             (e.currentTarget as HTMLButtonElement).style.color = "#948ea1";
           }}
         >
-          <Icon name="logout" className="text-xl" />
-          <span
-            className="text-sm"
-            style={{ fontFamily: "var(--font-hanken)" }}
-          >
+          <Icon name="logout" style={{ fontSize: "20px", width: "20px", flexShrink: 0, color: "inherit" }} />
+          <span className="text-sm" style={{ fontFamily: "var(--font-hanken)" }}>
             Sign Out
           </span>
         </button>
@@ -224,21 +228,17 @@ function Sidebar({
 
 // ── Top Bar ──
 function TopBar({ profile }: { profile: Profile | null }) {
-  const greeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
-    return "Good evening";
-  };
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
     <header
       className="flex items-center justify-between h-20 px-6 border-b flex-shrink-0"
       style={{
-        backgroundColor: "rgba(19,19,19,0.9)",
+        backgroundColor: "rgba(19,19,19,0.92)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
-        borderColor: "rgba(73,68,85,0.2)",
+        borderColor: "rgba(73,68,85,0.25)",
       }}
     >
       <div>
@@ -246,34 +246,40 @@ function TopBar({ profile }: { profile: Profile | null }) {
           className="text-xs mb-0.5"
           style={{ fontFamily: "var(--font-jetbrains)", color: "#948ea1" }}
         >
-          {greeting()},
+          {greeting},
         </p>
         <h1
-          className="text-xl font-semibold text-white"
+          className="text-xl font-semibold text-white leading-tight"
           style={{ fontFamily: "var(--font-playfair)" }}
         >
-          {profile?.full_name ?? "Welcome back"}
+          {profile?.full_name ?? "Welcome"}
         </h1>
       </div>
 
       <div className="flex items-center gap-3">
         <button
-          className="p-2 rounded-lg transition-all"
+          className="w-9 h-9 flex items-center justify-center rounded-lg transition-all"
           style={{ color: "#948ea1" }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(73,68,85,0.2)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+          }}
           aria-label="Notifications"
         >
-          <Icon name="notifications" className="text-xl" />
+          <Icon name="notifications" style={{ fontSize: "20px" }} />
         </button>
         <Link href="/projects/new">
           <button
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
             style={{
               backgroundColor: "#7c4dff",
               color: "#fcf6ff",
               fontFamily: "var(--font-hanken)",
             }}
           >
-            <Icon name="add" className="text-base" />
+            <Icon name="add" style={{ fontSize: "18px" }} />
             New Project
           </button>
         </Link>
@@ -300,67 +306,64 @@ function StatCard({
 }) {
   return (
     <div
-      className="p-5 rounded-xl flex items-start gap-4"
+      className="p-5 rounded-xl"
       style={{
-        background: "rgba(32,31,31,0.6)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        boxShadow: `0 0 30px -10px ${glowColor}`,
+        background: "rgba(28,27,27,0.8)",
+        border: "1px solid rgba(73,68,85,0.2)",
+        boxShadow: `0 0 30px -12px ${glowColor}`,
       }}
     >
-      <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: `${accentColor}20` }}
-      >
-        <Icon name={icon} filled className="text-xl" style={{ color: accentColor }} />
-      </div>
-      <div className="min-w-0">
-        <p
-          className="text-xs mb-1"
-          style={{ fontFamily: "var(--font-jetbrains)", color: "#948ea1" }}
+      <div className="flex items-center gap-2 mb-3">
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: `${accentColor}1a` }}
+        >
+          <Icon name={icon} filled style={{ color: accentColor, fontSize: "18px" }} />
+        </div>
+        <span
+          className="text-xs tracking-wider uppercase"
+          style={{ fontFamily: "var(--font-jetbrains)", color: "#948ea1", fontSize: "10px" }}
         >
           {label}
-        </p>
-        <p
-          className="text-2xl font-bold text-white"
-          style={{ fontFamily: "var(--font-playfair)" }}
-        >
-          {value}
-        </p>
-        {sub && (
-          <p
-            className="text-xs mt-1"
-            style={{ fontFamily: "var(--font-hanken)", color: "#948ea1" }}
-          >
-            {sub}
-          </p>
-        )}
+        </span>
       </div>
+      <p
+        className="text-3xl font-bold text-white leading-none mb-1"
+        style={{ fontFamily: "var(--font-playfair)" }}
+      >
+        {value}
+      </p>
+      {sub && (
+        <p
+          className="text-xs"
+          style={{ fontFamily: "var(--font-hanken)", color: "#948ea1" }}
+        >
+          {sub}
+        </p>
+      )}
     </div>
   );
 }
 
 // ── Recent Projects ──
 function RecentProjects({ projects }: { projects: Project[] }) {
-  const statusColors: Record<string, string> = {
-    active: "#cdbdff",
-    archived: "#948ea1",
-    deleted: "#ffb4ab",
+  const statusMeta: Record<string, { color: string; label: string }> = {
+    active:   { color: "#cdbdff", label: "Active"   },
+    archived: { color: "#948ea1", label: "Archived" },
+    deleted:  { color: "#ffb4ab", label: "Deleted"  },
   };
 
   return (
     <div
       className="rounded-xl overflow-hidden"
       style={{
-        background: "rgba(32,31,31,0.6)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(28,27,27,0.8)",
+        border: "1px solid rgba(73,68,85,0.2)",
       }}
     >
+      {/* Header */}
       <div
-        className="flex items-center justify-between px-6 py-4 border-b"
+        className="flex items-center justify-between px-5 py-4 border-b"
         style={{ borderColor: "rgba(73,68,85,0.2)" }}
       >
         <h2
@@ -371,31 +374,33 @@ function RecentProjects({ projects }: { projects: Project[] }) {
         </h2>
         <Link href="/projects">
           <span
-            className="text-xs transition-colors hover:text-purple-300 cursor-pointer"
-            style={{ fontFamily: "var(--font-jetbrains)", color: "#7c4dff" }}
+            className="text-xs font-medium cursor-pointer transition-colors"
+            style={{ fontFamily: "var(--font-hanken)", color: "#7c4dff" }}
           >
             View all →
           </span>
         </Link>
       </div>
 
+      {/* Empty state */}
       {projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center px-6">
-          <Icon name="folder_music" className="text-5xl mb-4" style={{ color: "#494455" }} />
+        <div className="flex flex-col items-center justify-center py-14 text-center px-6">
+          <div
+            className="w-14 h-14 rounded-xl flex items-center justify-center mb-4"
+            style={{ backgroundColor: "rgba(73,68,85,0.2)" }}
+          >
+            <Icon name="folder_open" style={{ color: "#494455", fontSize: "28px" }} />
+          </div>
           <p
             className="text-sm mb-4"
             style={{ fontFamily: "var(--font-hanken)", color: "#948ea1" }}
           >
-            No projects yet. Start creating your first divine track.
+            No projects yet. Start your first divine production.
           </p>
           <Link href="/projects/new">
             <button
               className="px-5 py-2 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
-              style={{
-                backgroundColor: "#7c4dff",
-                color: "#fcf6ff",
-                fontFamily: "var(--font-hanken)",
-              }}
+              style={{ backgroundColor: "#7c4dff", color: "#fcf6ff", fontFamily: "var(--font-hanken)" }}
             >
               Create Project
             </button>
@@ -406,55 +411,48 @@ function RecentProjects({ projects }: { projects: Project[] }) {
           {projects.map((p, i) => (
             <li
               key={p.id}
-              className="flex items-center gap-4 px-6 py-4 transition-all cursor-pointer"
+              className="flex items-center gap-4 px-5 py-3.5 cursor-pointer transition-all"
               style={{
-                borderBottom:
-                  i < projects.length - 1
-                    ? "1px solid rgba(73,68,85,0.15)"
-                    : "none",
+                borderBottom: i < projects.length - 1 ? "1px solid rgba(73,68,85,0.12)" : "none",
               }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLLIElement).style.backgroundColor =
-                  "rgba(124,77,255,0.05)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLLIElement).style.backgroundColor = "transparent";
-              }}
+              onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLLIElement).style.backgroundColor = "rgba(124,77,255,0.05)")
+              }
+              onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLLIElement).style.backgroundColor = "transparent")
+              }
             >
               <div
                 className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: "rgba(124,77,255,0.15)" }}
               >
-                <Icon name="music_note" className="text-base" style={{ color: "#cdbdff" }} filled />
+                <Icon name="music_note" filled style={{ color: "#cdbdff", fontSize: "18px" }} />
               </div>
               <div className="flex-1 min-w-0">
                 <p
-                  className="text-sm font-semibold text-white truncate"
+                  className="text-sm font-semibold text-white truncate leading-tight"
                   style={{ fontFamily: "var(--font-hanken)" }}
                 >
                   {p.title}
                 </p>
                 <p
-                  className="text-xs truncate"
-                  style={{ fontFamily: "var(--font-jetbrains)", color: "#948ea1" }}
+                  className="text-xs mt-0.5 truncate"
+                  style={{ fontFamily: "var(--font-jetbrains)", color: "#948ea1", fontSize: "11px" }}
                 >
                   {p.genre ?? "No genre"} •{" "}
-                  {new Date(p.updated_at).toLocaleDateString("en-NG", {
-                    day: "numeric",
-                    month: "short",
-                  })}
+                  {new Date(p.updated_at).toLocaleDateString("en-NG", { day: "numeric", month: "short" })}
                 </p>
               </div>
               <span
-                className="px-2 py-0.5 rounded-full text-[10px] capitalize flex-shrink-0"
+                className="px-2.5 py-0.5 rounded-full text-[10px] flex-shrink-0"
                 style={{
                   fontFamily: "var(--font-jetbrains)",
-                  color: statusColors[p.status] ?? "#948ea1",
-                  backgroundColor: `${statusColors[p.status] ?? "#948ea1"}15`,
-                  border: `1px solid ${statusColors[p.status] ?? "#948ea1"}30`,
+                  color: statusMeta[p.status]?.color ?? "#948ea1",
+                  backgroundColor: `${statusMeta[p.status]?.color ?? "#948ea1"}18`,
+                  border: `1px solid ${statusMeta[p.status]?.color ?? "#948ea1"}30`,
                 }}
               >
-                {p.status}
+                {statusMeta[p.status]?.label ?? p.status}
               </span>
             </li>
           ))}
@@ -466,36 +464,28 @@ function RecentProjects({ projects }: { projects: Project[] }) {
 
 // ── AI Activity Feed ──
 function AIActivityFeed({ requests }: { requests: GenerationRequest[] }) {
-  const statusIcon: Record<string, string> = {
-    queued: "schedule",
-    processing: "sync",
-    completed: "check_circle",
-    failed: "error",
-  };
-  const statusColor: Record<string, string> = {
-    queued: "#948ea1",
-    processing: "#00daf3",
-    completed: "#cdbdff",
-    failed: "#ffb4ab",
+  const statusMeta: Record<string, { icon: string; color: string; filled: boolean }> = {
+    queued:     { icon: "schedule",      color: "#948ea1", filled: false },
+    processing: { icon: "sync",          color: "#00daf3", filled: false },
+    completed:  { icon: "check_circle",  color: "#cdbdff", filled: true  },
+    failed:     { icon: "error",         color: "#ffb4ab", filled: true  },
   };
 
   return (
     <div
       className="rounded-xl overflow-hidden"
       style={{
-        background: "rgba(32,31,31,0.6)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        background: "rgba(28,27,27,0.8)",
         border: "1px solid rgba(0,218,243,0.15)",
-        boxShadow: "0 0 30px -10px rgba(0,218,243,0.1)",
+        boxShadow: "0 0 30px -12px rgba(0,218,243,0.1)",
       }}
     >
       <div
-        className="flex items-center justify-between px-6 py-4 border-b"
+        className="flex items-center justify-between px-5 py-4 border-b"
         style={{ borderColor: "rgba(73,68,85,0.2)" }}
       >
         <div className="flex items-center gap-2">
-          <Icon name="auto_awesome" className="text-base" style={{ color: "#e9c400" }} filled />
+          <Icon name="auto_awesome" filled style={{ color: "#e9c400", fontSize: "18px" }} />
           <h2
             className="text-base font-semibold text-white"
             style={{ fontFamily: "var(--font-playfair)" }}
@@ -504,7 +494,7 @@ function AIActivityFeed({ requests }: { requests: GenerationRequest[] }) {
           </h2>
         </div>
         <span
-          className="text-[10px] px-2 py-0.5 rounded-full"
+          className="px-2 py-0.5 rounded-full text-[10px]"
           style={{
             fontFamily: "var(--font-jetbrains)",
             color: "#00daf3",
@@ -518,50 +508,57 @@ function AIActivityFeed({ requests }: { requests: GenerationRequest[] }) {
 
       {requests.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-          <Icon
-            name="auto_awesome"
-            className="text-4xl mb-3"
-            style={{ color: "#494455" }}
-          />
+          <div
+            className="w-12 h-12 rounded-xl flex items-center justify-center mb-3"
+            style={{ backgroundColor: "rgba(73,68,85,0.2)" }}
+          >
+            <Icon name="auto_awesome" style={{ color: "#494455", fontSize: "24px" }} />
+          </div>
           <p
             className="text-sm"
             style={{ fontFamily: "var(--font-hanken)", color: "#948ea1" }}
           >
-            No AI generations yet. Use the Lyric Assistant or SmartProduce to get started.
+            No AI generations yet. Use the Lyric Assistant to get started.
           </p>
         </div>
       ) : (
-        <ul className="divide-y" style={{ borderColor: "rgba(73,68,85,0.15)" }}>
-          {requests.map((r) => (
-            <li key={r.id} className="px-6 py-4 flex items-start gap-3">
-              <Icon
-                name={statusIcon[r.status] ?? "help"}
-                className="text-lg flex-shrink-0 mt-0.5"
-                style={{ color: statusColor[r.status] ?? "#948ea1" }}
-                filled={r.status === "completed"}
-              />
-              <div className="min-w-0 flex-1">
-                <p
-                  className="text-sm text-white truncate"
-                  style={{ fontFamily: "var(--font-hanken)" }}
-                >
-                  {r.prompt.length > 60
-                    ? r.prompt.slice(0, 60) + "…"
-                    : r.prompt}
-                </p>
-                <p
-                  className="text-xs mt-0.5"
-                  style={{ fontFamily: "var(--font-jetbrains)", color: "#948ea1" }}
-                >
-                  {r.type} •{" "}
-                  {new Date(r.created_at).toLocaleTimeString("en-NG", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </div>
-            </li>
-          ))}
+        <ul>
+          {requests.map((r, i) => {
+            const meta = statusMeta[r.status] ?? statusMeta.queued;
+            return (
+              <li
+                key={r.id}
+                className="flex items-start gap-3 px-5 py-3.5"
+                style={{
+                  borderBottom: i < requests.length - 1 ? "1px solid rgba(73,68,85,0.12)" : "none",
+                }}
+              >
+                <Icon
+                  name={meta.icon}
+                  filled={meta.filled}
+                  style={{ color: meta.color, fontSize: "18px", flexShrink: 0, marginTop: 2 }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="text-sm text-white leading-snug"
+                    style={{ fontFamily: "var(--font-hanken)" }}
+                  >
+                    {r.prompt.length > 70 ? r.prompt.slice(0, 70) + "…" : r.prompt}
+                  </p>
+                  <p
+                    className="text-xs mt-0.5"
+                    style={{ fontFamily: "var(--font-jetbrains)", color: "#948ea1", fontSize: "11px" }}
+                  >
+                    {r.type} •{" "}
+                    {new Date(r.created_at).toLocaleTimeString("en-NG", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
@@ -571,44 +568,21 @@ function AIActivityFeed({ requests }: { requests: GenerationRequest[] }) {
 // ── Quick Actions ──
 function QuickActions() {
   const actions = [
-    {
-      icon: "auto_awesome",
-      label: "Lyric Assistant",
-      desc: "Generate gospel lyrics from scripture",
-      href: "/lyric-assistant",
-      color: "#e9c400",
-      glow: "rgba(233,196,0,0.2)",
-    },
-    {
-      icon: "tune",
-      label: "SmartProduce",
-      desc: "AI mixing and mastering advice",
-      href: "/smart-produce",
-      color: "#7c4dff",
-      glow: "rgba(124,77,255,0.2)",
-    },
-    {
-      icon: "compare_arrows",
-      label: "Benchmarking",
-      desc: "Compare against gospel standards",
-      href: "/music-iq",
-      color: "#00daf3",
-      glow: "rgba(0,218,243,0.2)",
-    },
+    { icon: "auto_awesome",    label: "Lyric Assistant", desc: "Generate gospel lyrics from scripture", href: "/lyric-assistant", color: "#e9c400" },
+    { icon: "graphic_eq",      label: "SmartProduce",    desc: "AI mixing and mastering advice",       href: "/smart-produce",    color: "#7c4dff" },
+    { icon: "compare_arrows",  label: "Benchmarking",    desc: "Compare against gospel standards",     href: "/music-iq",         color: "#00daf3" },
   ];
 
   return (
     <div
       className="rounded-xl overflow-hidden"
       style={{
-        background: "rgba(32,31,31,0.6)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(28,27,27,0.8)",
+        border: "1px solid rgba(73,68,85,0.2)",
       }}
     >
       <div
-        className="px-6 py-4 border-b"
+        className="px-5 py-4 border-b"
         style={{ borderColor: "rgba(73,68,85,0.2)" }}
       >
         <h2
@@ -618,52 +592,47 @@ function QuickActions() {
           Quick Actions
         </h2>
       </div>
-      <div className="p-4 grid grid-cols-1 gap-3">
+      <div className="p-3 space-y-2">
         {actions.map((a) => (
           <Link key={a.label} href={a.href}>
             <div
-              className="flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-all group"
-              style={{
-                border: "1px solid rgba(73,68,85,0.2)",
-                boxShadow: `0 0 0 0 ${a.glow}`,
-              }}
+              className="flex items-center gap-3 p-3.5 rounded-lg cursor-pointer transition-all group"
+              style={{ border: "1px solid rgba(73,68,85,0.15)" }}
               onMouseEnter={(e) => {
                 const el = e.currentTarget as HTMLDivElement;
-                el.style.borderColor = `${a.color}40`;
-                el.style.boxShadow = `0 0 20px -5px ${a.glow}`;
+                el.style.borderColor = `${a.color}35`;
                 el.style.backgroundColor = `${a.color}08`;
               }}
               onMouseLeave={(e) => {
                 const el = e.currentTarget as HTMLDivElement;
-                el.style.borderColor = "rgba(73,68,85,0.2)";
-                el.style.boxShadow = `0 0 0 0 ${a.glow}`;
+                el.style.borderColor = "rgba(73,68,85,0.15)";
                 el.style.backgroundColor = "transparent";
               }}
             >
               <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: `${a.color}20` }}
+                className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: `${a.color}1a` }}
               >
-                <Icon name={a.icon} className="text-xl" style={{ color: a.color }} filled />
+                <Icon name={a.icon} filled style={{ color: a.color, fontSize: "18px" }} />
               </div>
-              <div className="min-w-0">
+              <div className="flex-1 min-w-0">
                 <p
-                  className="text-sm font-semibold text-white"
+                  className="text-sm font-semibold text-white leading-tight"
                   style={{ fontFamily: "var(--font-hanken)" }}
                 >
                   {a.label}
                 </p>
                 <p
-                  className="text-xs"
+                  className="text-xs leading-tight"
                   style={{ fontFamily: "var(--font-hanken)", color: "#948ea1" }}
                 >
                   {a.desc}
                 </p>
               </div>
               <Icon
-                name="arrow_forward"
-                className="text-base ml-auto flex-shrink-0 transition-transform group-hover:translate-x-1"
-                style={{ color: "#494455" }}
+                name="chevron_right"
+                className="transition-transform duration-150 group-hover:translate-x-0.5 flex-shrink-0"
+                style={{ color: "#494455", fontSize: "20px" }}
               />
             </div>
           </Link>
@@ -673,131 +642,118 @@ function QuickActions() {
   );
 }
 
-// ── Loading skeleton ──
+// ── Divine Spark CTA ──
+function DivineSpark() {
+  return (
+    <div
+      className="p-5 rounded-xl"
+      style={{
+        background: "linear-gradient(135deg, rgba(124,77,255,0.18) 0%, rgba(0,218,243,0.08) 100%)",
+        border: "1px solid rgba(124,77,255,0.3)",
+        boxShadow: "0 0 40px -12px rgba(124,77,255,0.25)",
+      }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <Icon name="auto_awesome" filled style={{ color: "#e9c400", fontSize: "16px" }} />
+        <span
+          className="text-xs tracking-widest uppercase"
+          style={{ fontFamily: "var(--font-jetbrains)", color: "#e9c400", fontSize: "10px" }}
+        >
+          Divine Spark
+        </span>
+      </div>
+      <p
+        className="text-white mb-1"
+        style={{ fontFamily: "var(--font-playfair)", fontSize: "16px", fontWeight: 600 }}
+      >
+        Ready to create?
+      </p>
+      <p
+        className="text-xs mb-4 leading-relaxed"
+        style={{ fontFamily: "var(--font-hanken)", color: "#948ea1" }}
+      >
+        Describe your sound, mood, or a scripture — let the AI compose something divine.
+      </p>
+      <Link href="/lyric-assistant">
+        <button
+          className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
+          style={{ backgroundColor: "#7c4dff", color: "#fcf6ff", fontFamily: "var(--font-hanken)" }}
+        >
+          Open Lyric Assistant
+        </button>
+      </Link>
+    </div>
+  );
+}
+
+// ── Loading Skeleton ──
 function LoadingSkeleton() {
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: "#131313" }}>
       <div
-        className="hidden lg:block w-64 min-h-screen border-r flex-shrink-0"
-        style={{ backgroundColor: "#0e0e0e", borderColor: "rgba(73,68,85,0.2)" }}
+        className="hidden lg:block w-60 min-h-screen border-r flex-shrink-0"
+        style={{ backgroundColor: "#0e0e0e", borderColor: "rgba(73,68,85,0.25)" }}
       />
       <div className="flex-1 flex flex-col">
-        <div
-          className="h-20 border-b flex-shrink-0"
-          style={{ borderColor: "rgba(73,68,85,0.2)" }}
-        />
+        <div className="h-20 border-b flex-shrink-0" style={{ borderColor: "rgba(73,68,85,0.25)" }} />
         <div className="flex-1 p-6 space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-24 rounded-xl animate-pulse"
-              style={{ backgroundColor: "rgba(32,31,31,0.6)" }}
-            />
-          ))}
+          <div className="grid grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="h-24 rounded-xl animate-pulse" style={{ backgroundColor: "rgba(32,31,31,0.6)" }} />
+            ))}
+          </div>
+          <div className="grid grid-cols-3 gap-6">
+            <div className="col-span-2 h-64 rounded-xl animate-pulse" style={{ backgroundColor: "rgba(32,31,31,0.6)" }} />
+            <div className="h-64 rounded-xl animate-pulse" style={{ backgroundColor: "rgba(32,31,31,0.6)" }} />
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// ── Main Dashboard Page ──
+// ── Main Page ──
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [credits, setCredits] = useState<Credits | null>(null);
+  const [profile,  setProfile]  = useState<Profile | null>(null);
+  const [credits,  setCredits]  = useState<Credits | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [requests, setRequests] = useState<GenerationRequest[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
-    async function loadDashboard() {
-      // ── Check auth ──
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
+    async function load() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) { router.replace("/login"); return; }
 
-      if (authError || !user) {
-        router.replace("/login");
-        return;
-      }
+      const [p, c, pr, rq] = await Promise.all([
+        supabase.from("profiles").select("full_name,email,role,plan,onboarding_complete").eq("id", user.id).single(),
+        supabase.from("credits").select("balance,total_used").eq("user_id", user.id).single(),
+        supabase.from("projects").select("id,title,genre,status,updated_at").eq("owner_id", user.id).neq("status","deleted").order("updated_at",{ascending:false}).limit(5),
+        supabase.from("generation_requests").select("id,prompt,status,type,created_at").eq("user_id", user.id).order("created_at",{ascending:false}).limit(5),
+      ]);
 
-      // ── Fetch profile, credits, projects, recent AI requests in parallel ──
-      const [profileRes, creditsRes, projectsRes, requestsRes] =
-        await Promise.all([
-          supabase
-            .from("profiles")
-            .select("full_name, email, role, plan, onboarding_complete")
-            .eq("id", user.id)
-            .single(),
-
-          supabase
-            .from("credits")
-            .select("balance, total_used")
-            .eq("user_id", user.id)
-            .single(),
-
-          supabase
-            .from("projects")
-            .select("id, title, genre, status, updated_at")
-            .eq("owner_id", user.id)
-            .neq("status", "deleted")
-            .order("updated_at", { ascending: false })
-            .limit(5),
-
-          supabase
-            .from("generation_requests")
-            .select("id, prompt, status, type, created_at")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(5),
-        ]);
-
-      if (profileRes.data) setProfile(profileRes.data);
-      if (creditsRes.data) setCredits(creditsRes.data);
-      if (projectsRes.data) setProjects(projectsRes.data);
-      if (requestsRes.data) setRequests(requestsRes.data);
-
+      if (p.data)  setProfile(p.data);
+      if (c.data)  setCredits(c.data);
+      if (pr.data) setProjects(pr.data);
+      if (rq.data) setRequests(rq.data);
       setLoading(false);
     }
+    load();
 
-    loadDashboard();
-
-    // ── Realtime: listen for generation_request status changes ──
     const channel = supabase
-      .channel("generation-updates")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "generation_requests",
-        },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setRequests((prev) => [
-              payload.new as GenerationRequest,
-              ...prev.slice(0, 4),
-            ]);
-          }
-          if (payload.eventType === "UPDATE") {
-            setRequests((prev) =>
-              prev.map((r) =>
-                r.id === payload.new.id
-                  ? (payload.new as GenerationRequest)
-                  : r
-              )
-            );
-          }
-        }
-      )
+      .channel("gen-updates")
+      .on("postgres_changes", { event: "*", schema: "public", table: "generation_requests" }, (payload) => {
+        if (payload.eventType === "INSERT")
+          setRequests(prev => [payload.new as GenerationRequest, ...prev.slice(0, 4)]);
+        if (payload.eventType === "UPDATE")
+          setRequests(prev => prev.map(r => r.id === payload.new.id ? payload.new as GenerationRequest : r));
+      })
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [router, supabase]);
 
   async function handleSignOut() {
@@ -807,62 +763,42 @@ export default function DashboardPage() {
 
   if (loading) return <LoadingSkeleton />;
 
-  const totalCreditsUsed = credits?.total_used ?? 0;
-  const creditBalance = credits?.balance ?? 0;
+  const plan = profile?.plan ?? "free";
+  const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
 
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: "#131313" }}>
-      {/* Sidebar */}
-      <Sidebar
-        profile={profile}
-        credits={credits}
-        onSignOut={handleSignOut}
-      />
+      <Sidebar profile={profile} credits={credits} onSignOut={handleSignOut} />
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar profile={profile} />
 
         <main className="flex-1 p-6 overflow-y-auto">
-          {/* Plan badge */}
-          {profile?.plan === "free" && (
+
+          {/* Free plan banner */}
+          {plan === "free" && (
             <div
-              className="mb-6 flex items-center justify-between p-4 rounded-xl"
+              className="mb-6 flex items-center justify-between gap-4 p-4 rounded-xl"
               style={{
                 backgroundColor: "rgba(233,196,0,0.06)",
                 border: "1px solid rgba(233,196,0,0.2)",
               }}
             >
-              <div className="flex items-center gap-3">
-                <Icon
-                  name="workspace_premium"
-                  className="text-xl"
-                  style={{ color: "#e9c400" }}
-                  filled
-                />
-                <div>
-                  <p
-                    className="text-sm font-semibold"
-                    style={{ fontFamily: "var(--font-hanken)", color: "#e9c400" }}
-                  >
+              <div className="flex items-center gap-3 min-w-0">
+                <Icon name="workspace_premium" filled style={{ color: "#e9c400", fontSize: "22px", flexShrink: 0 }} />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold" style={{ fontFamily: "var(--font-hanken)", color: "#e9c400" }}>
                     You&apos;re on the Free Plan
                   </p>
-                  <p
-                    className="text-xs"
-                    style={{ fontFamily: "var(--font-hanken)", color: "#948ea1" }}
-                  >
+                  <p className="text-xs" style={{ fontFamily: "var(--font-hanken)", color: "#948ea1" }}>
                     Upgrade to unlock unlimited generations and premium studio tools.
                   </p>
                 </div>
               </div>
-              <Link href="/pricing">
+              <Link href="/pricing" className="flex-shrink-0">
                 <button
-                  className="px-4 py-2 rounded-lg text-xs font-semibold transition-all hover:opacity-90 flex-shrink-0"
-                  style={{
-                    backgroundColor: "#e9c400",
-                    color: "#221b00",
-                    fontFamily: "var(--font-hanken)",
-                  }}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold hover:opacity-90 transition-all"
+                  style={{ backgroundColor: "#e9c400", color: "#221b00", fontFamily: "var(--font-hanken)" }}
                 >
                   Upgrade
                 </button>
@@ -870,106 +806,26 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-            <StatCard
-              icon="toll"
-              label="CREDIT BALANCE"
-              value={creditBalance}
-              sub="Free tier: 10 credits"
-              accentColor="#e9c400"
-              glowColor="rgba(233,196,0,0.2)"
-            />
-            <StatCard
-              icon="folder_music"
-              label="TOTAL PROJECTS"
-              value={projects.length}
-              sub="Active productions"
-              accentColor="#cdbdff"
-              glowColor="rgba(124,77,255,0.2)"
-            />
-            <StatCard
-              icon="auto_awesome"
-              label="AI GENERATIONS"
-              value={totalCreditsUsed}
-              sub="Tracks & lyrics created"
-              accentColor="#00daf3"
-              glowColor="rgba(0,218,243,0.15)"
-            />
-            <StatCard
-              icon="workspace_premium"
-              label="CURRENT PLAN"
-              value={
-                (profile?.plan?.charAt(0)?.toUpperCase() ?? "") +
-                (profile?.plan?.slice(1) ?? "Free")
-              }
-              sub="i-Yadah Network"
-              accentColor="#7c4dff"
-              glowColor="rgba(124,77,255,0.2)"
-            />
+          {/* Stat grid */}
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            <StatCard icon="toll"               label="Credit Balance"   value={credits?.balance ?? 0}     sub="Free tier: 10 credits"  accentColor="#e9c400" glowColor="rgba(233,196,0,0.25)"    />
+            <StatCard icon="folder_open"         label="Total Projects"   value={projects.length}           sub="Active productions"     accentColor="#cdbdff" glowColor="rgba(124,77,255,0.25)"   />
+            <StatCard icon="auto_awesome"        label="AI Generations"   value={credits?.total_used ?? 0}  sub="Tracks & lyrics created" accentColor="#00daf3" glowColor="rgba(0,218,243,0.2)"    />
+            <StatCard icon="workspace_premium"   label="Current Plan"     value={planLabel}                 sub="i-Yadah Network"        accentColor="#7c4dff" glowColor="rgba(124,77,255,0.25)"   />
           </div>
 
-          {/* Main grid */}
+          {/* Main content grid */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {/* Left — projects (takes 2 cols) */}
+            {/* Left 2 cols */}
             <div className="xl:col-span-2 space-y-6">
               <RecentProjects projects={projects} />
               <AIActivityFeed requests={requests} />
             </div>
 
-            {/* Right — quick actions + AI panel */}
-            <div className="space-y-6">
+            {/* Right col */}
+            <div className="space-y-4">
               <QuickActions />
-
-              {/* Divine Spark panel */}
-              <div
-                className="p-6 rounded-xl"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(124,77,255,0.15) 0%, rgba(0,218,243,0.08) 100%)",
-                  border: "1px solid rgba(124,77,255,0.25)",
-                  boxShadow: "0 0 40px -10px rgba(124,77,255,0.2)",
-                }}
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <Icon
-                    name="auto_awesome"
-                    className="text-lg"
-                    style={{ color: "#e9c400" }}
-                    filled
-                  />
-                  <span
-                    className="text-xs tracking-widest uppercase"
-                    style={{ fontFamily: "var(--font-jetbrains)", color: "#e9c400" }}
-                  >
-                    Divine Spark
-                  </span>
-                </div>
-                <p
-                  className="text-sm text-white mb-1"
-                  style={{ fontFamily: "var(--font-playfair)", fontSize: "16px", fontWeight: 600 }}
-                >
-                  Ready to create?
-                </p>
-                <p
-                  className="text-xs mb-4"
-                  style={{ fontFamily: "var(--font-hanken)", color: "#948ea1" }}
-                >
-                  Start with a prompt — describe your sound, mood, or a scripture, and let the AI begin.
-                </p>
-                <Link href="/lyric-assistant">
-                  <button
-                    className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
-                    style={{
-                      backgroundColor: "#7c4dff",
-                      color: "#fcf6ff",
-                      fontFamily: "var(--font-hanken)",
-                    }}
-                  >
-                    Open Lyric Assistant
-                  </button>
-                </Link>
-              </div>
+              <DivineSpark />
             </div>
           </div>
         </main>
