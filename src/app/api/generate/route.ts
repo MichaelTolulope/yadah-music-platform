@@ -89,21 +89,31 @@ export async function POST(req: NextRequest) {
     let resultData: Record<string, string> = {};
 
     if (type === "lyrics") {
-      // Call Claude API (Anthropic) for lyric generation
-      const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.ANTHROPIC_API_KEY!,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1024,
-          messages: [
-            {
-              role: "user",
-              content: `You are a gifted gospel songwriter with deep knowledge of African Christian music traditions.
+      // Call Claude API (Anthropic) for lyric generation.
+      // Explicit timeout added: the long observed durations (15-32s)
+      // before failure suggested the request might be hanging rather
+      // than failing fast on a config problem. A 25s timeout means we
+      // find out which one it is quickly instead of waiting indefinitely.
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 25_000);
+
+      let aiResponse: Response;
+      try {
+        aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": process.env.ANTHROPIC_API_KEY!,
+            "anthropic-version": "2023-06-01",
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-6",
+            max_tokens: 1024,
+            messages: [
+              {
+                role: "user",
+                content: `You are a gifted gospel songwriter with deep knowledge of African Christian music traditions.
 
 Generate complete, heartfelt gospel song lyrics based on the following:
 
@@ -121,13 +131,48 @@ Write lyrics with:
 Format with clear section labels (VERSE 1, CHORUS, VERSE 2, BRIDGE).
 Make the lyrics spiritually authentic, culturally relevant${language !== "English" ? `, and natural in ${language}` : ""}.
 Do not add any commentary — output only the song lyrics.`,
-            },
-          ],
-        }),
-      });
+              },
+            ],
+          }),
+        });
+      } catch (fetchErr) {
+        clearTimeout(timeout);
+        const isAbort = fetchErr instanceof Error && fetchErr.name === "AbortError";
+        console.error(
+          "[/api/generate] fetch to Anthropic failed",
+          isAbort ? "TIMEOUT after 25s" : fetchErr
+        );
+        await admin.from("generation_requests").update({ status: "failed", finished_at: new Date().toISOString() }).eq("id", request.id);
+        return NextResponse.json(
+          { error: isAbort ? "AI generation timed out. Please try again." : "AI generation failed. Please try again." },
+          { status: 500 }
+        );
+      }
+      clearTimeout(timeout);
 
       if (!aiResponse.ok) {
-        // Update request to failed
+        // Anthropic returns a JSON error body describing exactly what
+        // went wrong (invalid key, rate limit, billing issue, bad
+        // request, etc.) on every non-2xx response. The previous version
+        // of this code checked aiResponse.ok and returned a generic
+        // error WITHOUT ever reading that body — so the real cause was
+        // being discarded before it could reach any log. This is why
+        // terminal output showed long request durations and 500s with
+        // no [/api/generate] detail: the error was real, it just was
+        // never looked at. Reading and logging it now.
+        let anthropicError: unknown;
+        try {
+          anthropicError = await aiResponse.json();
+        } catch {
+          anthropicError = await aiResponse.text().catch(() => "(could not read error body)");
+        }
+        console.error(
+          "[/api/generate] Anthropic API error",
+          aiResponse.status,
+          aiResponse.statusText,
+          JSON.stringify(anthropicError)
+        );
+
         await admin.from("generation_requests").update({ status: "failed", finished_at: new Date().toISOString() }).eq("id", request.id);
         return NextResponse.json({ error: "AI generation failed. Please try again." }, { status: 500 });
       }
