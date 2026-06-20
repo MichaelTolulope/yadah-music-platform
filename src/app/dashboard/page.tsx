@@ -270,7 +270,7 @@ function TopBar({ profile }: { profile: Profile | null }) {
         >
           <Icon name="notifications" style={{ fontSize: "20px" }} />
         </button>
-        <Link href="/projects/new">
+        <Link href="/projects">
           <button
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
             style={{
@@ -397,7 +397,7 @@ function RecentProjects({ projects }: { projects: Project[] }) {
           >
             No projects yet. Start your first divine production.
           </p>
-          <Link href="/projects/new">
+          <Link href="/projects">
             <button
               className="px-5 py-2 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
               style={{ backgroundColor: "#7c4dff", color: "#fcf6ff", fontFamily: "var(--font-hanken)" }}
