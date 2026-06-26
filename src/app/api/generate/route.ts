@@ -2,8 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
+import { GoogleGenAI } from "@google/genai";
+import { HfInference } from "@huggingface/inference"; // ✅ Added Hugging Face
+import { formatPromptToDisplay } from "@/lib/util";
 
-// ── Service role client — bypasses RLS for credit deduction ──
+// Initialize AI SDK clients
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+const hf = new HfInference(process.env.HF_ACCESS_TOKEN); // ✅ Added HF client
+
 function serviceClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,7 +18,6 @@ function serviceClient() {
   );
 }
 
-// ── User client — respects RLS ──
 async function userClient() {
   const cookieStore = await cookies();
   return createServerClient(
@@ -29,7 +34,6 @@ async function userClient() {
 
 export async function POST(req: NextRequest) {
   try {
-    // ── 1. Verify auth ──
     const supabase = await userClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -37,18 +41,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorised. Please log in." }, { status: 401 });
     }
 
-    // ── 2. Parse request body ──
     const body = await req.json();
-    const { type, prompt, language = "English", style = "afro-gospel", project_id } = body;
+    
+    const type = body.type || body.tool; 
+    const { prompt, language = "English", style = "afro-gospel", project_id } = body;
 
-    if (!prompt?.trim()) {
+    const formattedPrompt = formatPromptToDisplay(prompt);
+
+    if (!formattedPrompt?.trim()) {
       return NextResponse.json({ error: "Prompt is required." }, { status: 400 });
     }
     if (!["lyrics", "music", "mix_advice", "benchmarking"].includes(type)) {
       return NextResponse.json({ error: "Invalid generation type." }, { status: 400 });
     }
 
-    // ── 3. Check credit balance ──
     const admin = serviceClient();
     const { data: credit } = await admin
       .from("credits")
@@ -57,26 +63,21 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (!credit || credit.balance < 1) {
-      return NextResponse.json(
-        { error: "Insufficient credits. Please upgrade your plan." },
-        { status: 402 }
-      );
+      return NextResponse.json({ error: "Insufficient credits." }, { status: 402 });
     }
 
-    // ── 4. Insert generation_requests row (status: queued) ──
+    // ── 1. Create a processing request entry ──
     const { data: request, error: insertError } = await admin
       .from("generation_requests")
       .insert({
-        user_id:      user.id,
-        project_id:   project_id ?? null,
+        user_id: user.id,
+        project_id: project_id ?? null,
         type,
-        prompt:       prompt.trim(),
-        language,
-        style,
-        model_params: { language, style },
-        status:       "processing",
-        progress:     10,
-        started_at:   new Date().toISOString(),
+        prompt: formattedPrompt,
+        model_params: { language, style }, // Combined to prevent table column schema crashes
+        status: "processing",
+        progress: 10,
+        started_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -85,138 +86,110 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Failed to queue request." }, { status: 500 });
     }
 
-    // ── 5. Generate content ──
     let resultData: Record<string, string> = {};
 
     if (type === "lyrics") {
-      // Call Claude API (Anthropic) for lyric generation.
-      // Explicit timeout added: the long observed durations (15-32s)
-      // before failure suggested the request might be hanging rather
-      // than failing fast on a config problem. A 25s timeout means we
-      // find out which one it is quickly instead of waiting indefinitely.
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 25_000);
+      const systemInstruction = `You are a gifted gospel songwriter with deep knowledge of African Christian music traditions.
+Format assignments with clear section labels (VERSE 1, CHORUS, VERSE 2, BRIDGE).
+Make the lyrics spiritually authentic, culturally relevant${language !== "English" ? `, and natural in ${language}` : ""}.
+Do not add any chat, introductory pleasantries, markdown commentary, or explanations — output ONLY the raw song lyrics text requested.`;
 
-      let aiResponse: Response;
-      try {
-        aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          signal: controller.signal,
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": process.env.ANTHROPIC_API_KEY!,
-            "anthropic-version": "2023-06-01",
-          },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-6",
-            max_tokens: 1024,
-            messages: [
-              {
-                role: "user",
-                content: `You are a gifted gospel songwriter with deep knowledge of African Christian music traditions.
-
-Generate complete, heartfelt gospel song lyrics based on the following:
-
-Theme/Scripture: ${prompt}
+      const userPrompt = `Generate complete, heartfelt gospel song lyrics based on the following rules:
+Theme/Scripture: ${formattedPrompt}
 Language: ${language}
 Musical Style: ${style}
 
-Write lyrics with:
+Write lyrics structural design:
 - A verse (8 lines)
 - A chorus (4-6 lines, repeated feel)
 - A second verse (8 lines)  
 - Bridge (4 lines, climactic and worshipful)
-- Final chorus
+- Final chorus`;
 
-Format with clear section labels (VERSE 1, CHORUS, VERSE 2, BRIDGE).
-Make the lyrics spiritually authentic, culturally relevant${language !== "English" ? `, and natural in ${language}` : ""}.
-Do not add any commentary — output only the song lyrics.`,
-              },
-            ],
-          }),
+      try {
+        // ── 2. Run text generation using Gemini ──
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: userPrompt,
+          config: {
+            systemInstruction: systemInstruction,
+            temperature: 0.75,
+          }
         });
-      } catch (fetchErr) {
-        clearTimeout(timeout);
-        const isAbort = fetchErr instanceof Error && fetchErr.name === "AbortError";
-        console.error(
-          "[/api/generate] fetch to Anthropic failed",
-          isAbort ? "TIMEOUT after 25s" : fetchErr
-        );
-        await admin.from("generation_requests").update({ status: "failed", finished_at: new Date().toISOString() }).eq("id", request.id);
-        return NextResponse.json(
-          { error: isAbort ? "AI generation timed out. Please try again." : "AI generation failed. Please try again." },
-          { status: 500 }
-        );
-      }
-      clearTimeout(timeout);
 
-      if (!aiResponse.ok) {
-        // Anthropic returns a JSON error body describing exactly what
-        // went wrong (invalid key, rate limit, billing issue, bad
-        // request, etc.) on every non-2xx response. The previous version
-        // of this code checked aiResponse.ok and returned a generic
-        // error WITHOUT ever reading that body — so the real cause was
-        // being discarded before it could reach any log. This is why
-        // terminal output showed long request durations and 500s with
-        // no [/api/generate] detail: the error was real, it just was
-        // never looked at. Reading and logging it now.
-        let anthropicError: unknown;
+        const lyrics = response.text ?? "";
+        resultData = { lyrics };
+
+        // ── 3. Run Hugging Face Audio generation using Gemini's output and original style ──
         try {
-          anthropicError = await aiResponse.json();
-        } catch {
-          anthropicError = await aiResponse.text().catch(() => "(could not read error body)");
+          // Take the first few lines of the lyrics or original prompt context to direct the musical instrumentation mood
+          const cleanSnippet = lyrics.split("\n").filter(Boolean).slice(1, 3).join(", ");
+          const hfPrompt = `Musical style: ${style}. Mood from lyrics: ${cleanSnippet}. Professional premium production quality instrument track.`;
+
+          const hfResponse = await hf.request({
+            model: "facebook/musicgen-small",
+            inputs: hfPrompt,
+          });
+
+          const audioBlob = (hfResponse as unknown) as Blob;
+          const buffer = Buffer.from(await audioBlob.arrayBuffer());
+          const fileName = `${user.id}-${Date.now()}.wav`;
+
+          // ── 4. Upload raw binary file into your Supabase Public Storage Bucket ──
+          const { error: uploadError } = await admin.storage
+            .from("generated-music")
+            .upload(fileName, buffer, {
+              contentType: "audio/wav",
+              cacheControl: "3600",
+            });
+
+          if (!uploadError) {
+            const { data: { publicUrl } } = admin.storage
+              .from("generated-music")
+              .getPublicUrl(fileName);
+
+            // Append audio path to client response block
+            resultData.audioUrl = publicUrl;
+          } else {
+            console.error("[/api/generate] Audio Storage Upload issue:", uploadError);
+          }
+        } catch (audioErr) {
+          // Non-blocking catch so the user still receives lyrics text if Hugging Face times out
+          console.error("[/api/generate] HuggingFace Audio Pipeline exception:", audioErr);
+          resultData.audioError = "Audio track could not be generated at this time.";
         }
-        console.error(
-          "[/api/generate] Anthropic API error",
-          aiResponse.status,
-          aiResponse.statusText,
-          JSON.stringify(anthropicError)
-        );
 
+      } catch (aiErr) {
+        console.error("[/api/generate] Gemini Generation Failed:", aiErr);
         await admin.from("generation_requests").update({ status: "failed", finished_at: new Date().toISOString() }).eq("id", request.id);
-        return NextResponse.json({ error: "AI generation failed. Please try again." }, { status: 500 });
+        return NextResponse.json({ error: "Gemini Engine was unable to process generation rules." }, { status: 500 });
       }
-
-      const aiData = await aiResponse.json();
-      const lyrics = aiData.content?.[0]?.text ?? "";
-      resultData = { lyrics };
     }
 
-    // ── 6. Update request to completed ──
+    // ── 5. Update database transaction status to finished ──
     await admin.from("generation_requests").update({
-      status:      "completed",
-      progress:    100,
+      status: "completed",
+      progress: 100,
       result_data: resultData,
+      result_url: resultData.audioUrl || null, // Write directly to flat table location if columns exist
       finished_at: new Date().toISOString(),
     }).eq("id", request.id);
 
-    // ── 7. Deduct 1 credit ──
-    // total_used increments the existing count — the previous version of
-    // this line computed (balance - balance) + 1, which always evaluated
-    // to exactly 1 regardless of how many generations had run before.
-    // Fixed to actually accumulate. A speculative RPC call to a
-    // "decrement_credit" function was removed from here — its existence
-    // was never confirmed, and if it did exist with different logic this
-    // would have double-deducted credits silently (the .catch() swallowed
-    // any error either way). One explicit update, easy to audit.
-    await admin
-      .from("credits")
-      .update({
-        balance:    credit.balance - 1,
-        total_used: credit.total_used + 1,
-      })
-      .eq("user_id", user.id);
+    // ── 6. Deduct credit balance ──
+    await admin.from("credits").update({
+      balance: credit.balance - 1,
+      total_used: credit.total_used + 1,
+    }).eq("user_id", user.id);
 
-    // ── 8. Insert credit transaction log ──
+    // ── 7. Log accounting ledger record ──
     await admin.from("credit_transactions").insert({
-      user_id:    user.id,
+      user_id: user.id,
       request_id: request.id,
-      amount:     -1,
-      type:       "usage",
-      description: `${type} generation — "${prompt.slice(0, 60)}"`,
+      amount: -1,
+      type: "usage",
+      description: `${type} generation — "${formattedPrompt.slice(0, 60)}"`,
     });
 
-    // ── 9. Return result ──
     return NextResponse.json({
       request_id: request.id,
       type,
@@ -224,7 +197,7 @@ Do not add any commentary — output only the song lyrics.`,
     });
 
   } catch (err) {
-    console.error("[/api/generate]", err);
+    console.error("[/api/generate] Absolute Global Catch Block Failure:", err);
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }

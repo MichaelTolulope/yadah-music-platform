@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-client";
+import Sidebar from "@/app/components/Sidebar";
 
 // ── Types ──
 interface Project {
@@ -430,83 +431,6 @@ function ProjectCard({
   );
 }
 
-// ── Sidebar (reused pattern from dashboard) ──
-function Sidebar({ onSignOut }: { onSignOut: () => void }) {
-  const NAV = [
-    { icon: "space_dashboard", label: "Dashboard",       href: "/dashboard",       active: false },
-    { icon: "folder_open",     label: "My Projects",     href: "/projects",        active: true  },
-    { icon: "lyrics",          label: "Lyric Assistant", href: "/lyric-assistant", active: false },
-    { icon: "graphic_eq",      label: "SmartProduce",    href: "/smart-produce",   active: false },
-    { icon: "bar_chart",       label: "Music IQ",        href: "/music-iq",        active: false },
-    { icon: "calendar_month",  label: "Studio Sessions", href: "/sessions",        active: false },
-  ];
-
-  return (
-    <aside
-      className="hidden lg:flex flex-col w-60 min-h-screen border-r flex-shrink-0"
-      style={{ backgroundColor: "#0e0e0e", borderColor: "rgba(73,68,85,0.25)" }}
-    >
-      <div
-        className="flex items-center h-20 px-5 border-b flex-shrink-0"
-        style={{ borderColor: "rgba(73,68,85,0.25)" }}
-      >
-        <Link href="/">
-          <span
-            className="text-xl font-bold tracking-tight cursor-pointer"
-            style={{ fontFamily: "var(--font-playfair)", color: "#cdbdff" }}
-          >
-            Zamar.AI
-          </span>
-        </Link>
-      </div>
-
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV.map(item => (
-          <Link key={item.label} href={item.href}>
-            <div
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 cursor-pointer"
-              style={{
-                backgroundColor: item.active ? "rgba(124,77,255,0.15)" : "transparent",
-                border: item.active ? "1px solid rgba(124,77,255,0.3)" : "1px solid transparent",
-              }}
-              onMouseEnter={e => { if (!item.active) (e.currentTarget as HTMLDivElement).style.backgroundColor = "rgba(73,68,85,0.15)"; }}
-              onMouseLeave={e => { if (!item.active) (e.currentTarget as HTMLDivElement).style.backgroundColor = "transparent"; }}
-            >
-              <Icon
-                name={item.icon}
-                filled={item.active}
-                style={{ color: item.active ? "#cdbdff" : "#948ea1", fontSize: "20px", width: "20px", flexShrink: 0 }}
-              />
-              <span
-                className="text-sm truncate"
-                style={{
-                  fontFamily: "var(--font-hanken)",
-                  fontWeight: item.active ? 600 : 400,
-                  color: item.active ? "#cdbdff" : "#cac3d8",
-                }}
-              >
-                {item.label}
-              </span>
-            </div>
-          </Link>
-        ))}
-      </nav>
-
-      <div className="px-3 pb-4 border-t pt-3" style={{ borderColor: "rgba(73,68,85,0.2)" }}>
-        <button
-          onClick={onSignOut}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 text-left"
-          style={{ color: "#948ea1" }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "rgba(73,68,85,0.2)"; (e.currentTarget as HTMLButtonElement).style.color = "#e5e2e1"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "#948ea1"; }}
-        >
-          <Icon name="logout" style={{ fontSize: "20px", width: "20px", flexShrink: 0, color: "inherit" }} />
-          <span className="text-sm" style={{ fontFamily: "var(--font-hanken)" }}>Sign Out</span>
-        </button>
-      </div>
-    </aside>
-  );
-}
 
 // ── Main Page ──
 export default function ProjectsPage() {
