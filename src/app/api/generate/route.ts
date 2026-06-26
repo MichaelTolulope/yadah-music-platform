@@ -126,17 +126,10 @@ Write lyrics structural design:
           const cleanSnippet = lyrics.split("\n").filter(Boolean).slice(1, 3).join(", ");
           const hfPrompt = `Musical style: ${style}. Mood from lyrics: ${cleanSnippet}. Professional premium production quality instrument track.`;
 
-          let hfResponse;
-          try {
-            // Using the explicit textToAudio method with an active serverless TTS/Audio model
-            hfResponse = await hf.textToAudio({
-              model: "facebook/mms-tts-eng",
-              inputs: hfPrompt,
-            });
-          } catch (hfError: any) {
-            console.error("HuggingFace internal endpoint failure:", hfError);
-            throw new Error(`HuggingFace Audio Pipeline failed: ${hfError.message}`);
-          }
+          const hfResponse = await hf.request({
+            model: "facebook/musicgen-small",
+            inputs: hfPrompt,
+          });
 
           const audioBlob = (hfResponse as unknown) as Blob;
           const buffer = Buffer.from(await audioBlob.arrayBuffer());
