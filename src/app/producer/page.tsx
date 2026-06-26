@@ -32,14 +32,6 @@ interface StudioSession {
   artiste?: { full_name: string | null } | null;
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-
-function createBrowserClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
 
 function formatSessionTime(isoString: string): { time: string; period: string } {
   const date = new Date(isoString);
@@ -133,7 +125,7 @@ function NavLink({
 
 export default function ProducerPage() {
   const router = useRouter();
-  const supabase = createBrowserClient();
+  const supabase = createClient();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [credits, setCredits] = useState<Credits | null>(null);
@@ -207,7 +199,7 @@ export default function ProducerPage() {
         .lte('scheduled_at', todayEnd.toISOString())
         .order('scheduled_at', { ascending: true });
 
-      if (sessionsData) setTodaySessions(sessionsData as StudioSession[]);
+      if (sessionsData) setTodaySessions(sessionsData as any);
 
       setLoading(false);
     }
