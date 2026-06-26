@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    
-    const type = body.type || body.tool; 
+
+    const type = body.type || body.tool;
     const { prompt, language = "English", style = "afro-gospel", project_id } = body;
 
     const formattedPrompt = formatPromptToDisplay(prompt);
@@ -126,10 +126,17 @@ Write lyrics structural design:
           const cleanSnippet = lyrics.split("\n").filter(Boolean).slice(1, 3).join(", ");
           const hfPrompt = `Musical style: ${style}. Mood from lyrics: ${cleanSnippet}. Professional premium production quality instrument track.`;
 
-          const hfResponse = await hf.request({
-            model: "facebook/musicgen-small",
-            inputs: hfPrompt,
-          });
+          let hfResponse;
+          try {
+            // Using the explicit textToAudio method with an active serverless TTS/Audio model
+            hfResponse = await hf.textToAudio({
+              model: "facebook/mms-tts-eng",
+              inputs: hfPrompt,
+            });
+          } catch (hfError: any) {
+            console.error("HuggingFace internal endpoint failure:", hfError);
+            throw new Error(`HuggingFace Audio Pipeline failed: ${hfError.message}`);
+          }
 
           const audioBlob = (hfResponse as unknown) as Blob;
           const buffer = Buffer.from(await audioBlob.arrayBuffer());
