@@ -4,7 +4,7 @@ import { Icon } from "./ai/ui-components";
 import { Credits, Profile } from "@/lib/global/types";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase-client";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 
 // ── Nav items — only confirmed Material Symbols names ──
@@ -30,6 +30,7 @@ const NAV_ITEMS = [
   const [credits,  setCredits]  = useState<Credits | null>(null);
     const router = useRouter();
     const supabase = createClient();
+    const pathname = usePathname();
 
     useEffect(() => {
         async function load(){
@@ -48,11 +49,11 @@ const NAV_ITEMS = [
 
         load();
       // Update active state based on current URL
-      const currentPath = window.location.pathname;
+      
         NAV_ITEMS.forEach(item => {
-          item.active = item.href === currentPath;
+          item.active = pathname === item.href;
         });
-    }, [window.location.pathname]);
+    }, [ pathname]);
 
   return (
     <aside
