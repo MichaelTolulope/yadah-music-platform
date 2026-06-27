@@ -3,7 +3,6 @@
 import { useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-client";
-import { Profile } from "@/lib/global/types";
 
 interface RoleGuardProps {
   children: ReactNode;
