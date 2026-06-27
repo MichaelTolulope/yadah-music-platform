@@ -378,7 +378,7 @@ function AIActivityFeed({ requests }: { requests: GenerationRequest[] }) {
 // ── Quick Actions ──
 function QuickActions() {
   const actions = [
-    { icon: "auto_awesome",    label: "Lyric Assistant", desc: "Generate gospel lyrics from scripture", href: "/lyric-assistant", color: "#e9c400" },
+    { icon: "auto_awesome",    label: "Lyric Assistant", desc: "Generate gospel lyrics from scripture", href: "/ai-create", color: "#e9c400" },
     { icon: "graphic_eq",      label: "SmartProduce",    desc: "AI mixing and mastering advice",       href: "/smart-produce",    color: "#7c4dff" },
     { icon: "compare_arrows",  label: "Benchmarking",    desc: "Compare against gospel standards",     href: "/music-iq",         color: "#00daf3" },
   ];
