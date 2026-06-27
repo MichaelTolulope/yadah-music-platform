@@ -78,7 +78,7 @@ const Sidebar = ({
             className="text-xl font-bold tracking-tight cursor-pointer"
             style={{ fontFamily: "var(--font-playfair)", color: "#cdbdff" }}
           >
-            I-Yadah Music
+            Zama AI
           </span>
         </Link>
       </div>
