@@ -6,54 +6,62 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase-client";
 import { useRouter, usePathname } from "next/navigation";
 
-
-// ── Nav items — only confirmed Material Symbols names ──
+// ── Master Nav Items Definition ──
 const NAV_ITEMS = [
-  { icon: "space_dashboard", label: "Dashboard",      href: "/dashboard",        active: true  },
-  { icon: "folder_open",     label: "My Projects",    href: "/projects",         active: false },
-  // { icon: "lyrics",          label: "Lyric Assistant",href: "/lyric-assistant",  active: false },
-  { icon: "graphic_eq",      label: "Create",   href: "/ai-create",    active: false },
-  { icon: "bar_chart",       label: "Music IQ",       href: "/music-iq",         active: false },
-  { icon: "calendar_month",  label: "Studio Sessions",href: "/sessions",         active: false },
+  { icon: "space_dashboard", label: "Dashboard",       href: "/dashboard" },
+  { icon: "folder_open",     label: "My Projects",    href: "/projects" },
+  { icon: "graphic_eq",      label: "Create",          href: "/ai-create" },
+  { icon: "bar_chart",       label: "Music IQ",        href: "/music-iq" },
+  { icon: "bar_chart",       label: "Smart Produce",   href: "/smart-produce" },
+  { icon: "calendar_month",  label: "Studio Sessions", href: "/sessions" },
 ];
 
-
 // ── Sidebar ──
- const Sidebar =  ({
+const Sidebar = ({
   onSignOut,
 }: {
   onSignOut: () => void;
 }) => {
-    
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [credits, setCredits] = useState<Credits | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
+  const pathname = usePathname();
 
-  const [profile,  setProfile]  = useState<Profile | null>(null);
-  const [credits,  setCredits]  = useState<Credits | null>(null);
-    const router = useRouter();
-    const supabase = createClient();
-    const pathname = usePathname();
-
-    useEffect(() => {
-        async function load(){
-             const { data: { user }, error } = await supabase.auth.getUser();
+  useEffect(() => {
+    async function load() {
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) { router.replace("/login"); return; }
 
-
-        const [p, c] = await Promise.all([
+      const [p, c] = await Promise.all([
         supabase.from("profiles").select("full_name,email,role,plan,onboarding_complete").eq("id", user.id).single(),
         supabase.from("credits").select("balance,total_used").eq("user_id", user.id).single(),
-        ]);
+      ]);
 
-        if (p.data)  setProfile(p.data);
-        if (c.data)  setCredits(c.data);
-        }
+      if (p.data) setProfile(p.data);
+      if (c.data) setCredits(c.data);
+    }
 
-        load();
-      // Update active state based on current URL
-      
-        NAV_ITEMS.forEach(item => {
-          item.active = pathname === item.href;
-        });
-    }, [ pathname]);
+    load();
+  }, [router, supabase]); // Removed window.location.pathname listener to avoid unneeded renders
+
+  // ── Role-based Filtering Logic ──
+  const visibleNavItems = NAV_ITEMS.filter((item) => {
+    const role = profile?.role?.toLowerCase() ?? "artiste";
+
+    if (role === "artiste") {
+      // Artiste explicitly doesn't have "Create" or "Smart Produce"
+      return !["Create", "Smart Produce"].includes(item.label);
+    }
+    
+    if (role === "producer") {
+      // Producer sees everything listed in NAV_ITEMS
+      return true;
+    }
+
+    // Fallback default (e.g. before profile loads): show basic links
+    return ["Dashboard", "My Projects", "Music IQ", "Studio Sessions"].includes(item.label);
+  });
 
   return (
     <aside
@@ -135,46 +143,51 @@ const NAV_ITEMS = [
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map((item) => (
-          <Link key={item.label} href={item.href}>
-            <div
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 cursor-pointer"
-              style={{
-                backgroundColor: item.active ? "rgba(124,77,255,0.15)" : "transparent",
-                border: item.active ? "1px solid rgba(124,77,255,0.3)" : "1px solid transparent",
-              }}
-              onMouseEnter={(e) => {
-                if (!item.active)
-                  (e.currentTarget as HTMLDivElement).style.backgroundColor = "rgba(73,68,85,0.15)";
-              }}
-              onMouseLeave={(e) => {
-                if (!item.active)
-                  (e.currentTarget as HTMLDivElement).style.backgroundColor = "transparent";
-              }}
-            >
-              <Icon
-                name={item.icon}
-                filled={item.active}
+        {visibleNavItems.map((item) => {
+          // Dynamically check if active via Next.js usePathname hook directly inside mapping
+          const isActive = pathname === item.href;
+
+          return (
+            <Link key={item.label} href={item.href}>
+              <div
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 cursor-pointer"
                 style={{
-                  color: item.active ? "#cdbdff" : "#948ea1",
-                  fontSize: "20px",
-                  width: "20px",
-                  flexShrink: 0,
+                  backgroundColor: isActive ? "rgba(124,77,255,0.15)" : "transparent",
+                  border: isActive ? "1px solid rgba(124,77,255,0.3)" : "1px solid transparent",
                 }}
-              />
-              <span
-                className="text-sm truncate"
-                style={{
-                  fontFamily: "var(--font-hanken)",
-                  fontWeight: item.active ? 600 : 400,
-                  color: item.active ? "#cdbdff" : "#cac3d8",
+                onMouseEnter={(e) => {
+                  if (!isActive)
+                    (e.currentTarget as HTMLDivElement).style.backgroundColor = "rgba(73,68,85,0.15)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive)
+                    (e.currentTarget as HTMLDivElement).style.backgroundColor = "transparent";
                 }}
               >
-                {item.label}
-              </span>
-            </div>
-          </Link>
-        ))}
+                <Icon
+                  name={item.icon}
+                  filled={isActive}
+                  style={{
+                    color: isActive ? "#cdbdff" : "#948ea1",
+                    fontSize: "20px",
+                    width: "20px",
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  className="text-sm truncate"
+                  style={{
+                    fontFamily: "var(--font-hanken)",
+                    fontWeight: isActive ? 600 : 400,
+                    color: isActive ? "#cdbdff" : "#cac3d8",
+                  }}
+                >
+                  {item.label}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
       </nav>
 
       {/* Sign out */}
@@ -200,6 +213,6 @@ const NAV_ITEMS = [
       </div>
     </aside>
   );
-}
+};
 
 export default Sidebar;
