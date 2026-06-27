@@ -78,7 +78,7 @@ const Sidebar = ({
             className="text-xl font-bold tracking-tight cursor-pointer"
             style={{ fontFamily: "var(--font-playfair)", color: "#cdbdff" }}
           >
-            Zama AI
+            Zamar AI
           </span>
         </Link>
       </div>
