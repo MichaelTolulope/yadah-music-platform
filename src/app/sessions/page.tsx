@@ -48,10 +48,11 @@ export default function StudioSessionsPage() {
                 return;
             }
             setUserId(user.id);
+            const { data: { role } } = await supabase.from("profiles").select("role").eq("id", user.id).single();
 
             // Map metadata seamlessly (handling standard variations like "artiste")
-            const metadataRole = user.user_metadata?.role?.toLowerCase();
-            if (metadataRole === "artiste") {
+            // const metadataRole = user.user_metadata?.role?.toLowerCase();
+            if (role.toLowerCase() === "artiste") {
                 setUserRole("artiste");
             } else {
                 setUserRole("producer");
