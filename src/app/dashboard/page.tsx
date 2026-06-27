@@ -484,7 +484,7 @@ function DivineSpark() {
       >
         Describe your sound, mood, or a scripture — let the AI compose something divine.
       </p>
-      <Link href="/lyric-assistant">
+      <Link href="/ai-create">
         <button
           className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
           style={{ backgroundColor: "#7c4dff", color: "#fcf6ff", fontFamily: "var(--font-hanken)" }}
