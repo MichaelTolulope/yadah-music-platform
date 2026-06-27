@@ -15,7 +15,7 @@ interface Project {
   status: "active" | "archived" | "deleted";
   cover_url: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at: string; 
 }
 
 // ── Icon helper ──
@@ -280,10 +280,12 @@ function CreateProjectModal({
 function ProjectCard({
   project,
   onArchive,
+  onUnarchive,
   onDelete,
 }: {
   project: Project;
   onArchive: (id: string) => void;
+  onUnarchive: (id: string) => void;
   onDelete: (id: string) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -359,6 +361,18 @@ function ProjectCard({
                 >
                   <Icon name="archive" style={{ fontSize: "16px", color: "#948ea1" }} />
                   Archive
+                </button>
+              )}
+              {project.status === "archived" && (
+                <button
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-xs transition-all text-left"
+                  style={{ fontFamily: "var(--font-hanken)", color: "#cac3d8" }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = "rgba(73,68,85,0.2)")}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
+                  onClick={() => { onUnarchive(project.id); setMenuOpen(false); }}
+                >
+                  <Icon name="unarchive" style={{ fontSize: "16px", color: "#948ea1" }} />
+                  Unarchive
                 </button>
               )}
               <button
@@ -469,6 +483,14 @@ export default function ProjectsPage() {
     await supabase.from("projects").update({ status: "archived" }).eq("id", id);
     setProjects(prev => prev.map(p => p.id === id ? { ...p, status: "archived" } : p));
   }
+
+  async function handleUnarchive(id: string) {
+  // Flip the status string safely back to "active"
+  await supabase.from("projects").update({ status: "active" }).eq("id", id);
+  
+  // Instantly update front-end local state for visual parity
+  setProjects(prev => prev.map(p => p.id === id ? { ...p, status: "active" } : p));
+}
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this project? This cannot be undone.")) return;
@@ -655,6 +677,7 @@ export default function ProjectsPage() {
                   project={p}
                   onArchive={handleArchive}
                   onDelete={handleDelete}
+                  onUnarchive={handleUnarchive}
                 />
               ))}
             </div>

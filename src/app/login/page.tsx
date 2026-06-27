@@ -183,6 +183,7 @@ export default function LoginPage() {
                 </label>
                 <input
                   className="w-full bg-surface-container-highest border-outline-variant rounded-lg text-white p-3 divine-spark-focus transition-all focus:ring-0"
+                  style={{ background: "rgba(73,68,85,0.12)", border: "1px solid rgba(73,68,85,0.3)", fontFamily: "var(--font-hanken)" }}
                   placeholder="minister@yadah.ai"
                   type="email"
                   value={email}
@@ -205,6 +206,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   className="w-full bg-surface-container-highest border-outline-variant rounded-lg text-white p-3 divine-spark-focus transition-all focus:ring-0"
+                  style={{ background: "rgba(73,68,85,0.12)", border: "1px solid rgba(73,68,85,0.3)", fontFamily: "var(--font-hanken)" }}   
                   placeholder="Enter your password"
                   type="password"
                   value={password}
@@ -214,7 +216,8 @@ export default function LoginPage() {
               </div>
 
               <button
-                className="w-full bg-primary-container text-on-primary-container py-4 rounded-xl font-button text-lg hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(124,77,255,0.3)] disabled:opacity-40 disabled:cursor-not-allowed"
+                className="cursor-pointer w-full bg-primary-container text-on-primary-container py-4 rounded-xl font-button text-lg hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(124,77,255,0.3)] disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: "rgba(73,68,85,0.12)", border: "1px solid rgba(73,68,85,0.3)", fontFamily: "var(--font-hanken)" }}
                 type="submit"
                 disabled={isSubmitting}
               >

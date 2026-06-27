@@ -314,11 +314,11 @@ export default function RegisterPage() {
                 {[1, 2, 3].map((dot) => (
                   <div
                     key={dot}
-                    className={`z-20 w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${
-                      dot <= step
-                        ? "bg-primary text-on-primary"
-                        : "bg-surface-container text-on-surface-variant border border-outline-variant"
-                    }`}
+                    className={`z-20 w-10 h-10 rounded-full flex items-center justify-center font-bold transition-colors ${dot <= step
+                      ? "bg-primary text-on-primary"
+                      : "bg-surface-container text-on-surface-variant border border-outline-variant"
+                      }`}
+                    style={{ background: "rgba(73,68,85,0.12)", border: "1px solid rgba(73,68,85,0.3)", fontFamily: "var(--font-hanken)" }}
                   >
                     {dot}
                   </div>
@@ -347,13 +347,14 @@ export default function RegisterPage() {
                       </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-gutter">
+                    <div className="grid md:grid-cols-2 gap-x-[20px]">
                       <div className="space-y-2">
                         <label className="font-label-caps text-label-caps text-outline">
                           Legal Name
                         </label>
                         <input
                           className="w-full bg-surface-container-highest border-outline-variant rounded-lg text-white p-3 divine-spark-focus transition-all focus:ring-0"
+                          style={{ background: "rgba(73,68,85,0.12)", border: "1px solid rgba(73,68,85,0.3)", fontFamily: "var(--font-hanken)" }}
                           placeholder="e.g. Minister Enoch"
                           type="text"
                           value={identity.legalName}
@@ -368,6 +369,7 @@ export default function RegisterPage() {
                         </label>
                         <input
                           className="w-full bg-surface-container-highest border-outline-variant rounded-lg text-white p-3 divine-spark-focus transition-all focus:ring-0"
+                          style={{ background: "rgba(73,68,85,0.12)", border: "1px solid rgba(73,68,85,0.3)", fontFamily: "var(--font-hanken)" }}
                           placeholder="e.g. Redeemed Voices"
                           type="text"
                           value={identity.ministryAffiliation}
@@ -385,6 +387,7 @@ export default function RegisterPage() {
                         </label>
                         <input
                           className="w-full bg-surface-container-highest border-outline-variant rounded-lg text-white p-3 divine-spark-focus transition-all focus:ring-0"
+                          style={{ background: "rgba(73,68,85,0.12)", border: "1px solid rgba(73,68,85,0.3)", fontFamily: "var(--font-hanken)" }}
                           placeholder="minister@yadah.ai"
                           type="email"
                           value={identity.email}
@@ -399,6 +402,7 @@ export default function RegisterPage() {
                         </label>
                         <input
                           className="w-full bg-surface-container-highest border-outline-variant rounded-lg text-white p-3 divine-spark-focus transition-all focus:ring-0"
+                          style={{ background: "rgba(73,68,85,0.12)", border: "1px solid rgba(73,68,85,0.3)", fontFamily: "var(--font-hanken)" }}
                           placeholder="+234..."
                           type="tel"
                           value={identity.phone}
@@ -413,6 +417,7 @@ export default function RegisterPage() {
                         </label>
                         <input
                           className="w-full bg-surface-container-highest border-outline-variant rounded-lg text-white p-3 divine-spark-focus transition-all focus:ring-0"
+                          style={{ background: "rgba(73,68,85,0.12)", border: "1px solid rgba(73,68,85,0.3)", fontFamily: "var(--font-hanken)" }}
                           placeholder="At least 8 characters"
                           type="password"
                           value={identity.password}
@@ -425,7 +430,8 @@ export default function RegisterPage() {
 
                     <div className="mt-8 flex justify-end">
                       <button
-                        className="bg-primary-container text-on-primary-container px-8 py-3 rounded-xl font-button hover:opacity-90 flex items-center gap-2 group disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="cursor-pointer bg-primary-container text-on-primary-container px-8 py-3 rounded-xl font-button hover:opacity-90 flex items-center gap-2 group disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ background: "rgba(73,68,85,0.12)", border: "1px solid rgba(73,68,85,0.3)", fontFamily: "var(--font-hanken)" }}
                         onClick={() => goToStep(2)}
                         disabled={!isStep1Valid}
                         type="button"
@@ -477,11 +483,10 @@ export default function RegisterPage() {
                                   }
                                 />
                                 <div
-                                  className={`p-4 rounded-xl border transition-all text-center ${
-                                    checked
-                                      ? "border-primary-container bg-primary-container/10"
-                                      : "border-outline-variant bg-surface-container-low"
-                                  }`}
+                                  className={`p-4 rounded-xl border transition-all text-center ${checked
+                                    ? "border-primary-container bg-primary-container/10"
+                                    : "border-outline-variant bg-surface-container-low"
+                                    }`}
                                 >
                                   <span className="font-button text-sm">{genre}</span>
                                 </div>
@@ -503,11 +508,10 @@ export default function RegisterPage() {
                                 key={lang}
                                 type="button"
                                 onClick={() => toggleLanguage(lang)}
-                                className={`px-4 py-2 rounded-full text-xs font-label-caps cursor-pointer transition-colors ${
-                                  selected
-                                    ? "border border-primary-container/50 bg-primary-container/10 text-primary-fixed hover:bg-primary-container/30"
-                                    : "border border-outline-variant bg-surface-container text-outline hover:border-primary-container/50"
-                                }`}
+                                className={`px-4 py-2 rounded-full text-xs font-label-caps cursor-pointer transition-colors ${selected
+                                  ? "border border-primary-container/50 bg-primary-container/10 text-primary-fixed hover:bg-primary-container/30"
+                                  : "border border-outline-variant bg-surface-container text-outline hover:border-primary-container/50"
+                                  }`}
                               >
                                 {lang}
                               </button>
@@ -526,7 +530,8 @@ export default function RegisterPage() {
                         Back
                       </button>
                       <button
-                        className="bg-primary-container text-on-primary-container px-8 py-3 rounded-xl font-button hover:opacity-90 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="cursor-pointer bg-primary-container text-on-primary-container px-8 py-3 rounded-xl font-button hover:opacity-90 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ background: "rgba(73,68,85,0.12)", border: "1px solid rgba(73,68,85,0.3)", fontFamily: "var(--font-hanken)" }}
                         onClick={() => goToStep(3)}
                         disabled={!isStep2Valid}
                         type="button"
@@ -587,8 +592,7 @@ export default function RegisterPage() {
                             Identity Verification
                           </h4>
                           <p className="font-body-md text-on-surface-variant text-sm mt-1">
-                            To access exclusive studio sessions and AI Lyric
-                            Assistant, we require a quick verification of your
+                            To access exclusive studio sessions, we require a quick verification of your
                             ministry identity.
                           </p>
                         </div>
@@ -622,7 +626,8 @@ export default function RegisterPage() {
 
                     <div className="mt-8 space-y-4">
                       <button
-                        className="w-full bg-primary-container text-on-primary-container py-4 rounded-xl font-button text-lg hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(124,77,255,0.3)] disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="cursor-pointer w-full bg-primary-container text-on-primary-container py-4 rounded-xl font-button text-lg hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(124,77,255,0.3)] disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ background: "rgba(73,68,85,0.12)", border: "1px solid rgba(73,68,85,0.3)", fontFamily: "var(--font-hanken)" }}
                         type="button"
                         disabled={!isStep3Valid || isSubmitting}
                         onClick={handleFinalSubmit}
@@ -630,7 +635,7 @@ export default function RegisterPage() {
                         {isSubmitting ? "Creating Account…" : "Create Account & Verify"}
                       </button>
                       <button
-                        className="w-full text-center text-outline hover:text-white font-button transition-colors py-2"
+                        className=" cursor-pointer w-full text-center text-outline hover:text-white font-button transition-colors py-2"
                         onClick={() => goToStep(2)}
                         type="button"
                       >
